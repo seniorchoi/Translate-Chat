@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Translation Chatroom</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .app-container {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background-color: #f7f7f7;
+      border-right: 1px solid #ddd;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .sidebar h1 {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .sidebar-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sidebar-section h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-group input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .input-group button {
+      padding: 8px 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .input-group button:hover {
+      background-color: #0056b3;
+    }
+
+    .language-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .language-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .language-item button {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .language-item button:hover {
+      background-color: #c82333;
+    }
+
+    .users-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .user-item {
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* Main chat area */
+    .main-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background-color: #fff;
+    }
+
+    .message {
+      margin-bottom: 16px;
+      padding: 12px;
+      border-radius: 8px;
+      max-width: 80%;
+    }
+
+    .message-header {
+      font-weight: 600;
+      margin-bottom: 6px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .message-original {
+      font-size: 15px;
+      margin-bottom: 8px;
+      color: #333;
+    }
+
+    .message-translations {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 8px;
+      padding-left: 12px;
+      border-left: 3px solid rgba(0,0,0,0.1);
+    }
+
+    .translation-item {
+      font-size: 13px;
+      color: #555;
+    }
+
+    .translation-lang {
+      font-weight: 600;
+      color: #007bff;
+      margin-right: 6px;
+    }
+
+    .info-message, .error-message {
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .info-message {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+
+    .error-message {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    /* Input area */
+    .input-area {
+      padding: 16px 20px;
+      background-color: #f7f7f7;
+      border-top: 1px solid #ddd;
+    }
+
+    .input-area form {
+      display: flex;
+      gap: 10px;
+    }
+
+    .input-area input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .input-area button {
+      padding: 10px 24px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .input-area button:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h1>Translation Chat</h1>
+
+      <!-- Active Users Section -->
+      <div class="sidebar-section">
+        <h2>Active Users (<span id="userCount">0</span>)</h2>
+        <div id="usersList" class="users-list"></div>
+      </div>
+
+      <!-- Name Section -->
+      <div class="sidebar-section">
+        <h2>Your Name</h2>
+        <div class="input-group">
+          <input id="nameInput" type="text" placeholder="Enter your name" />
+          <button id="setNameBtn">Set</button>
+        </div>
+      </div>
+
+      <!-- Languages Section -->
+      <div class="sidebar-section">
+        <h2>Chat Languages</h2>
+        <div class="input-group">
+          <input id="langInput" type="text" placeholder="e.g., fr, spanish" />
+          <button id="addLangBtn">Add</button>
+        </div>
+        <div id="languageList" class="language-list"></div>
+      </div>
+    </div>
+
+    <!-- Main Chat Area -->
+    <div class="main-area">
+      <div id="messagesContainer" class="messages-container"></div>
+      <div class="input-area">
+        <form id="messageForm">
+          <input id="messageInput" type="text" placeholder="Type a message..." autocomplete="off" />
+          <button type="submit">Send</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Backend URL
+    const WS_URL = "ws://localhost:8000/ws";
+
+    // DOM elements
+    const messagesContainer = document.getElementById('messagesContainer');
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.getElementById('messageInput');
+    const nameInput = document.getElementById('nameInput');
+    const setNameBtn = document.getElementById('setNameBtn');
+    const langInput = document.getElementById('langInput');
+    const addLangBtn = document.getElementById('addLangBtn');
+    const languageList = document.getElementById('languageList');
+
+    // State
+    let globalLanguages = [];
+    let activeUsers = [];
+    let isSending = false;
+    let hiddenLanguages = new Set(JSON.parse(localStorage.getItem('hiddenLanguages') || '[]'));
+
+    // WebSocket connection
+    const ws = new WebSocket(WS_URL);
+
+    ws.onopen = () => {
+      addInfoMsg("Connected! Set your name and add languages to start chatting.");
+    };
+
+    ws.onclose = () => {
+      addInfoMsg("Disconnected from server.");
+    };
+
+    ws.onerror = () => {
+      addErrorMsg("WebSocket connection error.");
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.info) {
+          addInfoMsg(data.info);
+        } else if (data.error) {
+          addErrorMsg(data.error);
+        } else if (data.type === "language_update") {
+          globalLanguages = data.languages || [];
+          updateLanguageList();
+        } else if (data.type === "users_update") {
+          activeUsers = data.users || [];
+          updateUsersList();
+        } else if (data.type === "chat") {
+          addChatMessage(data);
+        }
+      } catch (err) {
+        console.error("Error parsing message:", err);
+      }
+    };
+
+    // Set name
+    setNameBtn.onclick = () => {
+      const name = nameInput.value.trim();
+      if (!name) return;
+      ws.send('/name ' + name);
+      nameInput.value = '';
+    };
+
+    // Add language
+    addLangBtn.onclick = () => {
+      const lang = langInput.value.trim();
+      if (!lang) return;
+      ws.send('/add-lang ' + lang);
+      langInput.value = '';
+    };
+
+    // Send message
+    messageForm.onsubmit = (e) => {
+      e.preventDefault();
+      const text = messageInput.value.trim();
+      if (!text || isSending) return;
+
+      isSending = true;
+      const sendBtn = messageForm.querySelector('button[type="submit"]');
+      sendBtn.textContent = 'Sending...';
+      sendBtn.disabled = true;
+
+      ws.send(text);
+      messageInput.value = '';
+    };
+
+    // Update language list display
+    function updateLanguageList() {
+      languageList.innerHTML = '';
+      globalLanguages.forEach(lang => {
+        const item = document.createElement('div');
+        item.className = 'language-item';
+        const isHidden = hiddenLanguages.has(lang);
+        item.innerHTML = `
+          <span>${lang.toUpperCase()}</span>
+          <div style="display: flex; gap: 4px;">
+            <button onclick="toggleHideLang('${lang}')" style="background-color: ${isHidden ? '#6c757d' : '#ffc107'}; font-size: 14px;">
+              ${isHidden ? '👁️' : '🙈'}
+            </button>
+            <button onclick="removeLang('${lang}')">×</button>
+          </div>
+        `;
+        languageList.appendChild(item);
+      });
+    }
+
+    // Update users list display
+    function updateUsersList() {
+      const usersList = document.getElementById('usersList');
+      const userCount = document.getElementById('userCount');
+      usersList.innerHTML = '';
+      userCount.textContent = activeUsers.length;
+
+      activeUsers.forEach(user => {
+        const item = document.createElement('div');
+        item.className = 'user-item';
+        item.style.backgroundColor = user.color;
+        item.textContent = user.username;
+        usersList.appendChild(item);
+      });
+    }
+
+    // Remove language
+    function removeLang(lang) {
+      ws.send('/remove-lang ' + lang);
+    }
+
+    // Toggle hide/show language
+    function toggleHideLang(lang) {
+      if (hiddenLanguages.has(lang)) {
+        hiddenLanguages.delete(lang);
+      } else {
+        hiddenLanguages.add(lang);
+      }
+      localStorage.setItem('hiddenLanguages', JSON.stringify([...hiddenLanguages]));
+      updateLanguageList();
+    }
+
+    // Add info message
+    function addInfoMsg(text) {
+      const div = document.createElement('div');
+      div.className = 'info-message';
+      div.textContent = text;
+      messagesContainer.appendChild(div);
+      scrollToBottom();
+    }
+
+    // Add error message
+    function addErrorMsg(text) {
+      const div = document.createElement('div');
+      div.className = 'error-message';
+      div.textContent = text;
+      messagesContainer.appendChild(div);
+      scrollToBottom();
+    }
+
+    // Add chat message with translations
+    function addChatMessage(data) {
+      // Reset sending state
+      isSending = false;
+      const sendBtn = messageForm.querySelector('button[type="submit"]');
+      sendBtn.textContent = 'Send';
+      sendBtn.disabled = false;
+
+      const div = document.createElement('div');
+      div.className = 'message';
+
+      const header = document.createElement('div');
+      header.className = 'message-header';
+      header.style.backgroundColor = data.color || '#e0e0e0';
+
+      // Add sender name and timestamp
+      let headerText = data.sender;
+      if (data.timestamp) {
+        const time = new Date(data.timestamp).toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        headerText += ` • ${time}`;
+      }
+      header.textContent = headerText;
+      div.appendChild(header);
+
+      const original = document.createElement('div');
+      original.className = 'message-original';
+      original.textContent = data.original;
+      div.appendChild(original);
+
+      if (data.translations && Object.keys(data.translations).length > 0) {
+        const translationsDiv = document.createElement('div');
+        translationsDiv.className = 'message-translations';
+
+        for (const [lang, text] of Object.entries(data.translations)) {
+          // Skip hidden languages
+          if (hiddenLanguages.has(lang.toLowerCase())) continue;
+
+          const transItem = document.createElement('div');
+          transItem.className = 'translation-item';
+          transItem.innerHTML = `<span class="translation-lang">[${lang}]</span>${text}`;
+          translationsDiv.appendChild(transItem);
+        }
+
+        div.appendChild(translationsDiv);
+      }
+
+      messagesContainer.appendChild(div);
+      scrollToBottom();
+    }
+
+    // Scroll to bottom
+    function scrollToBottom() {
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+  </script>
+</body>
+</html>
