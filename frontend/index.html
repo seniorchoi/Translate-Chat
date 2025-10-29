@@ -283,8 +283,10 @@
   </div>
 
   <script>
-    // Backend URL
-    const WS_URL = "ws://localhost:8000/ws";
+    // Backend URL - automatically detects protocol and host
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = window.location.host;
+    const WS_URL = `${wsProtocol}//${wsHost}/ws`;
 
     // DOM elements
     const messagesContainer = document.getElementById('messagesContainer');

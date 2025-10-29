@@ -1,10 +1,12 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from deep_translator import GoogleTranslator
 import logging
 import json
 import random
+import os
 from datetime import datetime
 from typing import Optional
 
@@ -25,6 +27,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ------------------------------------------------------------------
+# Static File Serving
+# ------------------------------------------------------------------
+# Get frontend path (works both locally and on Render)
+FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
+
+# Serve static files
+if os.path.exists(FRONTEND_DIR):
+    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+
+@app.get("/")
+async def read_root():
+    """Serve the main frontend HTML"""
+    index_path = os.path.join(FRONTEND_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"message": "Frontend not found", "path": FRONTEND_DIR}
 
 # ------------------------------------------------------------------
 # deep-translator compatibility helpers
